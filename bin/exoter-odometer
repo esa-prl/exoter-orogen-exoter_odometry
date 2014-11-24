@@ -1,0 +1,251 @@
+#! /usr/bin/env ruby
+
+require 'orocos'
+require 'orocos/async'
+require 'vizkit'
+require 'optparse'
+
+use_test_gui = true
+hostname = nil
+options = OptionParser.new do |opt|
+    opt.banner = <<-EOD
+rock-odometer [options]  </path/to/model/file> <task context name of the odometry component>
+    EOD
+    opt.on '--host=HOSTNAME', String, 'the host we should contact to find RTT tasks' do |host|
+        hostname = host
+    end
+    opt.on '--help', 'this help message' do
+        puts opt
+    end
+end
+
+args = options.parse(ARGV)
+model_file = args.shift
+task_context_name = args.shift
+
+if !model_file
+    puts "missing model file argument"
+    puts options
+    exit 1
+end
+
+
+if !task_context_name
+    puts "missing task context name"
+    puts options
+    exit 1
+elsif
+    if hostname
+        Orocos::CORBA.name_service.ip = hostname
+    end
+    Orocos.initialize
+end
+
+view3d = Vizkit.vizkit3d_widget
+view3d.show
+vis_gui = Vizkit.default_loader.RobotVisualization
+vis_gui.modelFile = model_file.dup
+view3d.setPluginDataFrame("body", vis_gui )
+
+main = Qt::Widget.new
+layout = Qt::VBoxLayout.new(main)
+layout.add_widget(view3d)
+
+#position widget
+ctrl_pose_gui = Vizkit.default_loader.ControlUi
+ctrl_pose_gui.initModel(model_file.dup)
+layout.add_widget(ctrl_pose_gui)
+
+#velocity widget
+ctrl_velo_gui = Vizkit.default_loader.ControlUi
+ctrl_velo_gui.initModel(model_file.dup)
+layout.add_widget(ctrl_velo_gui)
+
+#Button
+button = Qt::PushButton.new("Send Value")
+layout.add_widget(button)
+
+main.show
+
+#Contact points FL Wheel (RED)
+c0FL = Vizkit.default_loader.RigidBodyStateVisualization
+c0FL.displayCovariance(true)
+c0FL.setPluginName("FLFoot0")
+c0FL.setColor(Eigen::Vector3.new(0, 0, 0))
+c0FL.resetModel(0.1)
+Vizkit.vizkit3d_widget.setPluginDataFrame("body", c0FL)
+
+#Contact points FR Wheel (GREEN)
+c0FR = Vizkit.default_loader.RigidBodyStateVisualization
+c0FR.setColor(Eigen::Vector3.new(0, 0, 0))
+c0FR.setPluginName("FRFoot0")
+c0FR.resetModel(0.1)
+c0FR.displayCovariance(true)
+Vizkit.vizkit3d_widget.setPluginDataFrame("body", c0FR)
+
+#Contact points ML Wheel (GREEN)
+c0ML = Vizkit.default_loader.RigidBodyStateVisualization
+c0ML.setColor(Eigen::Vector3.new(0, 0, 0))
+c0ML.setPluginName("MLFoot0")
+c0ML.resetModel(0.1)
+c0ML.displayCovariance(true)
+Vizkit.vizkit3d_widget.setPluginDataFrame("body", c0ML)
+
+#Contact points MR Wheel (GREEN)
+c0MR = Vizkit.default_loader.RigidBodyStateVisualization
+c0MR.setColor(Eigen::Vector3.new(0, 0, 0))
+c0MR.setPluginName("MRFoot0")
+c0MR.resetModel(0.1)
+c0MR.displayCovariance(true)
+Vizkit.vizkit3d_widget.setPluginDataFrame("body", c0MR)
+
+#Contact points RL Wheel (BLUE)
+c0RL = Vizkit.default_loader.RigidBodyStateVisualization
+c0RL.setColor(Eigen::Vector3.new(0, 0, 0))
+c0RL.setPluginName("RLFoot0")
+c0RL.resetModel(0.1)
+c0RL.displayCovariance(true)
+Vizkit.vizkit3d_widget.setPluginDataFrame("body", c0RL)
+
+#Contact points RR Wheel (WHITE)
+c0RR = Vizkit.default_loader.RigidBodyStateVisualization
+c0RR.setColor(Eigen::Vector3.new(0, 0, 0))
+c0RR.setPluginName("RRFoot0")
+c0RR.resetModel(0.1)
+c0RR.displayCovariance(true)
+Vizkit.vizkit3d_widget.setPluginDataFrame("body", c0RR)
+
+# connect the widget with the task "simple_task"
+main.connect_to_task task_context_name do |task|
+    activeTimer =  Qt::Timer.new
+    joint = Types::Base::Samples::Joints.new
+    joint.names = [
+        "left_passive",
+        "right_passive",
+        "rear_passive",
+        "fl_walking",
+        "fr_walking",
+        "ml_walking",
+        "mr_walking",
+        "rl_walking",
+        "rr_walking",
+        "fl_steer",
+        "fr_steer",
+        "rl_steer",
+        "rr_steer",
+        "fl_drive",
+        "fr_drive",
+        "ml_drive",
+        "mr_drive",
+        "rl_drive",
+        "rr_drive",
+        "fl_mimic",
+        "fr_mimic",
+        "ml_mimic",
+        "mr_mimic",
+        "rl_mimic",
+        "rr_mimic"
+    ]
+    joint.elements = [
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00),
+        Types::Base::JointState.new(:speed => 0.00, :position => 0.00)
+    ]
+    imuSamples = Types::Base::Samples::IMUSensors.new
+    imuSamples.acc = Eigen::Vector3.new(0.00, 0.00, 9.81)
+    imuSamples.gyro = Eigen::Vector3.new(0.00, 0.00, 0.00)
+    orientation_rbs = Types::Base::Samples::RigidBodyState.new
+    orientation_rbs.position = Eigen::Vector3.new(0.00, 0.00, 0.00)
+    orientation_rbs.orientation = Eigen::Quaternion.Identity()
+
+    task.on_reachable do
+        puts "Task #{task.name} has #{task.port_names}"
+        puts "Value of local variable is #{joint.elements[0][:POSITION]}"
+        puts "Value of local variable is #{joint.names}"
+
+        #Access to the chains sub_ports
+        vector_rbs = task.port('fkchains_rbs_out')
+        vector_rbs.wait
+
+        Vizkit.display vector_rbs.sub_port([:rbsChain, 0]), :widget => c0FL
+        Vizkit.display vector_rbs.sub_port([:rbsChain, 1]), :widget => c0FR
+        Vizkit.display vector_rbs.sub_port([:rbsChain, 2]), :widget => c0ML
+        Vizkit.display vector_rbs.sub_port([:rbsChain, 3]), :widget => c0MR
+        Vizkit.display vector_rbs.sub_port([:rbsChain, 4]), :widget => c0RL
+        Vizkit.display vector_rbs.sub_port([:rbsChain, 5]), :widget => c0RR
+
+    end
+
+    activeTimer.setInterval(1000)
+    activeTimer.setSingleShot(false)
+    activeTimer.start
+
+    ctrl_pose_gui.connect(SIGNAL('newVal(QString, double)')) do |name, val|
+        i = 0
+        joint.names.each do |value|
+            puts "Values #{value}"
+            if value == name then
+                joint.elements[i].position =  val
+                STDERR.puts "Joints #{name} position has value #{val}"
+            end
+            i = i+1
+        end
+        # For the 3D Vizkit URDF visualization
+        vis_gui.updateData(joint)
+    end
+
+    ctrl_velo_gui.setWindowTitle("exoter-odometer: joints velocities [rad/s]")
+    ctrl_velo_gui.connect(SIGNAL('newVal(QString, double)')) do |name, val|
+        i = 0
+        joint.names.each do |value|
+            puts "Values #{value}"
+            if value == name then
+                joint.elements[i].speed =  val
+                STDERR.puts "Joints #{name} speed has value #{val}"
+            end
+            i = i+1
+        end
+    end
+
+    gjoint = lambda{joint.time = Time.now; joint}
+    cjoint = lambda{|msg| Qt::MessageBox.warning(widget,"ComErr",msg) if msg != "OK"; puts "Joint #{msg}"}
+    wrap(button).connect(SIGNAL(:clicked), PORT(:joints_samples), :getter => gjoint,:callback => cjoint)
+
+    gimu = lambda{orientation_rbs.time = Time.now; orientation_rbs}
+    cimu = lambda{|msg| Qt::MessageBox.warning(widget,"ComErr",msg) if msg != "OK"; puts "Orientation #{msg}"}
+    wrap(button).connect(SIGNAL(:clicked), PORT(:orientation_samples), :getter => gimu,:callback => cimu)
+
+#    ginertial = lambda{imuSamples.time = Time.now; imuSamples}
+#    cinertial = lambda{|msg| Qt::MessageBox.warning(widget,"ComErr",msg) if msg != "OK"; puts "Inertial #{msg}"}
+#    wrap(button).connect(SIGNAL(:clicked), PORT(:inertial_samples), :getter => ginertial,:callback => cinertial)
+
+    # disable the GUI until the task is reachable
+    task.on_reachable {main.setEnabled(true)}
+    task.on_unreachable {main.setEnabled(false)}
+end
+
+Vizkit.exec
+
+

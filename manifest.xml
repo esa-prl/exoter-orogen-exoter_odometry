@@ -1,0 +1,29 @@
+<package>
+  <description brief="ExoTer rover odometry">
+      Dedicated Orogen component for the full 6DoF Exoter odometry
+      This module takes joint state samples and inertial values to use the odometry library
+      in order to calculcate the odometry transformations (both absolute and relative).
+  </description>
+  <author>Javier Hidalgo Carrio/javier.hidalgo_carrio@dfki.de</author>
+  <copyright>
+      DFKI/robotik@dfki.de
+  </copyright>
+  <license>GPL-v2</license>
+  <depend package="base/cmake" />
+  <!--
+   To add any dependencies use the depend tag
+  <depend package="dummy-dependency-0" />
+	...
+  <depend package="dummy-dependency-n-1" />
+  <depend package="dummy-dependency-n" />
+  -->
+  <depend package="base/types" />
+  <depend package="base/orogen/types" />
+  <depend package="drivers/orogen/aggregator" />
+  <depend package="drivers/orogen/transformer" />
+  <depend package="exoter/exoter" />
+  <depend package="slam/odometry" />
+  <depend package="slam/localization" />
+  <tags>stable, localization</tags>
+</package>
+

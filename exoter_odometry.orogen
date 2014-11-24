@@ -1,0 +1,135 @@
+name 'exoter_odometry'
+# Optionally declare the version number
+# version "0.1"
+
+# If new data types need to be defined, they have to be put in a separate C++
+# header, and this header will be loaded here
+using_library "exoter" # the Exoter dedicated Kinematics and types
+using_library "odometry" # the motion model solvers
+using_library "localization" # the IIR filter and Dead reckoning integration
+
+# If the component/deployments use data types that are defined in other oroGen
+# projects, these projects should be imported there as well.
+import_types_from "base" #  IMU/Orientation and Joints samples
+import_types_from "OdometryTypes.hpp" # Task configuration types
+
+# Declare the Exoter Odometry class
+# The component computes the robot pose based on
+# a complete motion model.
+# Robot joints positions are needed to compute
+# the forward kinematics of robot chains.
+# Angular and robot joints
+# rates are needed to compute the movement.
+#
+# The corresponding C++ class can be edited in tasks/Task.hpp and
+# tasks/Task.cpp, and will be put in the exoter_odometry namespace.
+task_context "Task" do
+
+    #******************************
+    #**** Odometry Properties *****
+    #******************************
+    property('urdf_file', '/std/string').
+        doc "path to the rover urdf file"
+
+    property('wheelRadius', 'double').
+	doc 'Effective wheel radius average for odometry'
+
+    property('modelType', 'exoter_odometry/ModelType', :NUMERICAL).
+	doc 'Model type to use: ANALYTICAL or NUMERICAL approach'
+
+    property('odometry_source_frame', '/std/string').doc 'From Frame for the transformer'
+
+    property('odometry_target_frame', '/std/string').doc 'To Frame for the transformer'
+
+    property('delta_odometry_source_frame', '/std/string').doc 'From Frame for the transformer'
+
+    property('delta_odometry_target_frame', '/std/string').doc 'To Frame for the transformer'
+
+    #******************************
+    #**** Rover Properties ********
+    #******************************
+    property('robot_CoM', 'exoter_odometry/CenterOfMassConfiguration').
+        doc 'Configuration values of robot Center of Mass to compute the Center of Gravity. Used for the Weight matrix of the Motion Model.'+
+        'Look in Types for further details.'
+
+    #******************************
+    #*** IIR Filter Properties ****
+    #******************************
+    property('iir_filter', 'exoter_odometry/IIRCoefficients').
+        doc 'Configuration values to run the Infinite Impulse Response (IIR). Look in Types for further details.'
+
+    #******************************
+    #*** Orientation Noise Flag ***
+    #******************************
+    property('orientation_samples_noise_on', 'bool').
+        doc 'Set to true if desired orientation noise from orientation_samples input port.'+
+        "Otherwise it uses the motion model Leasts-Squares error to fill the uncertainty."
+
+    #******************************
+    #***   Joints Properties   ****
+    #******************************
+    property('jointsNames', 'std/vector<std/string>').
+	doc 'Required Joint in that order. Searching by names. It makes flexibility to the order values in the input port with the joints.'
+
+    #******************************
+    #******* Input ports  *********
+    #******************************
+    input_port('joints_samples', '/base/samples/Joints').
+        needs_reliable_connection.
+        doc 'timestamped joints samples (active and passive) providing odometry information.'+
+            'They have to provide position and speed. In case they do not originally provide both values'+
+            'Another component should perform this computation.'
+
+    input_port('orientation_samples', '/base/samples/RigidBodyState').
+        needs_reliable_connection.
+        doc 'provides timestamped orientation samples.'
+
+    ####################################################################
+    # Transformer:
+    # world_frame to navigation_frame is not longer required
+    # it has been moved to the transformer in visualization
+    # All the measurements in this task should be calibrated,
+    # compensated and in the robot body_frame.
+    # world_frame is the zero absolute, tangential to an imaginary plane.
+    # navigation_frame is the zero relative. Initial pose (position and
+    # orientation) is taken from the world 2 navigation transformation.
+    # The Odometry tasks assumes zero staring pose at relative
+    # navigation frame.
+    ####################################################################
+    transformer do
+        align_port("joints_samples", 0.08)
+	align_port("orientation_samples", 0.08)
+        max_latency(1.0)
+    end
+
+    #******************************
+    #******* Output Ports *********
+    #******************************
+    output_port('pose_samples_out', '/base/samples/RigidBodyState').
+	doc 'Estimated robot pose. Position and velocity is computed from statistical Motion Model.'+
+            'Orientation from IMU gyros integration.'
+
+    output_port('delta_pose_samples_out', '/base/samples/RigidBodyState').
+	doc 'Delta estimated robot pose (from body_frame k-1). Position and velocity is computed from statistical Motion Model.'+
+            'Orientation from IMU gyros integration.'
+
+    #************************************
+    #******* Output Debug Ports *********
+    #************************************
+    property('output_debug', 'bool', false).
+	doc 'Set to true if output debug information is desirable.'
+
+    output_port('fkchains_rbs_out', 'exoter_odometry/RobotContactPointsRbs').
+        doc 'Rigid Body States with the position and orientation of Contact points frame'+
+            'of the robot with respect to the body frame.'
+
+    output_port('sensitivity_analysis', 'exoter_odometry/SensitivityAnalysis').
+        doc 'Deterministic sensitivity analysis values.'
+
+    output_port('weighting_vector', 'base::VectorXd').
+        doc 'Weighing vector of the Static force (support polygon).'
+
+    port_driven
+
+end
+
