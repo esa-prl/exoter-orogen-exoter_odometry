@@ -21,7 +21,8 @@
   <depend package="base/orogen/types" />
   <depend package="drivers/orogen/aggregator" />
   <depend package="drivers/orogen/transformer" />
-  <depend package="exoter/exoter" />
+  <depend package="exoter/kinematics" />
+  <depend package="exoter/dynamics" />
   <depend package="slam/odometry" />
   <depend package="slam/localization" />
   <tags>stable, localization</tags>
