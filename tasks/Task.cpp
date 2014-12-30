@@ -79,10 +79,6 @@ void Task::joints_samplesTransformerCallback(const base::Time &ts, const ::base:
         else
             jointPositions[jointIdx] = 0.00;
 
-        /** Set to zero in case of a driving wheel **/
-        if((*it).find("drive") != std::string::npos)
-            jointPositions[jointIdx] = 0.00;
-
         /** Avoid NaN values in velocity **/
         if (std::isfinite(state.speed))
             jointVelocities[jointIdx] = state.speed;
