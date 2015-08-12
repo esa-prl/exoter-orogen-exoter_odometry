@@ -11,9 +11,9 @@
 #include <Eigen/StdVector> /** STL container with Eigen types **/
 
 /** Exoter dependencies includes **/
-#include <exoter/ExoterKinematicModel.hpp> /** Analytical model **/
-#include <exoter/ExoterKinematicKDL.hpp> /** KDL model **/
-#include <exoter/Configuration.hpp> /** Dedicated Exoter variables and constants **/
+#include <exoter_kinematics/ExoterKinematicModel.hpp> /** Analytical model **/
+#include <exoter_kinematics/ExoterKinematicKDL.hpp> /** KDL model **/
+#include <exoter_kinematics/Configuration.hpp> /** Dedicated Exoter variables and constants **/
 
 /** Odometry include for the Motion Model **/
 #include <odometry/MotionModel.hpp>
@@ -30,9 +30,9 @@ namespace exoter_odometry {
 
 
     /** Data types definition **/
-    typedef odometry::KinematicModel< double, exoter::NUMBER_OF_WHEELS, exoter::EXOTER_JOINT_DOF, exoter::SLIP_VECTOR_SIZE, exoter::CONTACT_POINT_DOF > RobotKinematicModel;
-    typedef odometry::MotionModel< double, exoter::NUMBER_OF_WHEELS, exoter::EXOTER_JOINT_DOF, exoter::SLIP_VECTOR_SIZE, exoter::CONTACT_POINT_DOF > RobotMotionModel;
-    typedef Eigen::Matrix<double, 6*exoter::NUMBER_OF_WHEELS, 6*exoter::NUMBER_OF_WHEELS> WeightingMatrix;
+    typedef odometry::KinematicModel< double, exoter_kinematics::NUMBER_OF_WHEELS, exoter_kinematics::EXOTER_JOINT_DOF, exoter_kinematics::SLIP_VECTOR_SIZE, exoter_kinematics::CONTACT_POINT_DOF > RobotKinematicModel;
+    typedef odometry::MotionModel< double, exoter_kinematics::NUMBER_OF_WHEELS, exoter_kinematics::EXOTER_JOINT_DOF, exoter_kinematics::SLIP_VECTOR_SIZE, exoter_kinematics::CONTACT_POINT_DOF > RobotMotionModel;
+    typedef Eigen::Matrix<double, 6*exoter_kinematics::NUMBER_OF_WHEELS, 6*exoter_kinematics::NUMBER_OF_WHEELS> WeightingMatrix;
 
 
     /*! \class Task 
@@ -121,7 +121,7 @@ namespace exoter_odometry {
         boost::shared_ptr< localization::IIR<localization::NORDER_BESSEL_FILTER, localization::NUMAXIS> > bessel;
 
         /** Sensitivity analysis **/
-        localization::Analysis <3, 3+exoter::EXOTER_JOINT_DOF> modelAnalysis; //! DoF of the analysis is 8
+        localization::Analysis <3, 3+exoter_kinematics::EXOTER_JOINT_DOF> modelAnalysis; //! DoF of the analysis is 8
 
         /** Weighting Matrix for the Motion Model  **/
         WeightingMatrix WeightMatrix;

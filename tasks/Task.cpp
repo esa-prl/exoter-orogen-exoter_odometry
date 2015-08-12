@@ -25,7 +25,7 @@ Task::Task(std::string const& name)
     vectorCartesianVelocities[0].setZero(); vectorCartesianVelocities[1].setZero();
 
     /** Weighting Matrix Initialization **/
-    WeightMatrix =  base::NaN<double>() * Eigen::Matrix<double, 6*exoter::NUMBER_OF_WHEELS, 6*exoter::NUMBER_OF_WHEELS, 1>::Identity();
+    WeightMatrix =  base::NaN<double>() * Eigen::Matrix<double, 6*exoter_kinematics::NUMBER_OF_WHEELS, 6*exoter_kinematics::NUMBER_OF_WHEELS, 1>::Identity();
 
     /** Uncertainty matrices for the motion model **/
     cartesianVelCov = base::NaN<double>() * Eigen::Matrix< double, 6, 6 >::Identity();
@@ -90,8 +90,8 @@ void Task::joints_samplesTransformerCallback(const base::Time &ts, const ::base:
     }
 
     /** Fill the rest of jointVelocities (unknown quantities) **/
-    jointVelocities.block<exoter::NUMBER_OF_WHEELS*exoter::SLIP_VECTOR_SIZE,1> (exoter::EXOTER_JOINT_DOF, 0) = Eigen::Matrix<double, exoter::NUMBER_OF_WHEELS*exoter::SLIP_VECTOR_SIZE, 1>::Identity() * base::NaN<double>();
-    jointVelocities.block<exoter::NUMBER_OF_WHEELS*exoter::CONTACT_POINT_DOF,1> (exoter::EXOTER_JOINT_DOF+(exoter::NUMBER_OF_WHEELS*exoter::SLIP_VECTOR_SIZE), 0) = Eigen::Matrix<double, exoter::NUMBER_OF_WHEELS*exoter::CONTACT_POINT_DOF, 1>::Identity() * base::NaN<double>();
+    jointVelocities.block<exoter_kinematics::NUMBER_OF_WHEELS*exoter_kinematics::SLIP_VECTOR_SIZE,1> (exoter_kinematics::EXOTER_JOINT_DOF, 0) = Eigen::Matrix<double, exoter_kinematics::NUMBER_OF_WHEELS*exoter_kinematics::SLIP_VECTOR_SIZE, 1>::Identity() * base::NaN<double>();
+    jointVelocities.block<exoter_kinematics::NUMBER_OF_WHEELS*exoter_kinematics::CONTACT_POINT_DOF,1> (exoter_kinematics::EXOTER_JOINT_DOF+(exoter_kinematics::NUMBER_OF_WHEELS*exoter_kinematics::SLIP_VECTOR_SIZE), 0) = Eigen::Matrix<double, exoter_kinematics::NUMBER_OF_WHEELS*exoter_kinematics::CONTACT_POINT_DOF, 1>::Identity() * base::NaN<double>();
 
     #ifdef DEBUG_PRINTS
     std::cout<<"[EXOTER_ODOMETRY JOINT_SAMPLES] Received time-stamp:\n"<<jointsSamples.time.toMicroseconds()<<"\n";
@@ -191,13 +191,13 @@ bool Task::configureHook()
     if (modelType == NUMERICAL)
     {
         /** Robot Kinematics Model **/
-        robotKinematics.reset(new exoter::ExoterKinematicKDL (urdfFile, wheelRadius));
+        robotKinematics.reset(new exoter_kinematics::ExoterKinematicKDL (urdfFile, wheelRadius));
         RTT::log(RTT::Warning)<<"[EXOTER_ODOMETRY] Numerical Model selected"<<RTT::endlog();
     }
     else if (modelType == ANALYTICAL)
     {
         /** Robot Kinematics Model **/
-        robotKinematics.reset(new exoter::ExoterKinematicModel (wheelRadius));
+        robotKinematics.reset(new exoter_kinematics::ExoterKinematicModel (wheelRadius));
         RTT::log(RTT::Warning)<<"[EXOTER_ODOMETRY] Analytical Model selected"<<RTT::endlog();
     }
     else
@@ -320,7 +320,7 @@ WeightingMatrix Task::dynamicWeightMatrix (CenterOfMassConfiguration &centerOfMa
     WeightingMatrix weightLocal; /** Local variable to return */
     std::vector< int > contactPoints; /** Contact points */
     std::vector< Eigen::Matrix<double, 3, 1> , Eigen::aligned_allocator < Eigen::Matrix<double, 3, 1> > > chainPosition; /** Chain position of contact points **/
-    Eigen::Matrix<double, exoter::NUMBER_OF_WHEELS, 1> forces; /** forces to calculate */
+    Eigen::Matrix<double, exoter_kinematics::NUMBER_OF_WHEELS, 1> forces; /** forces to calculate */
     double theoretical_g = 9.81; /** It is not important to be exactly the real theoretical g at the location **/
 
     /** Set to the identity **/
@@ -344,10 +344,10 @@ WeightingMatrix Task::dynamicWeightMatrix (CenterOfMassConfiguration &centerOfMa
         }
 
         /** Compute the forces **/
-        //exoter::BodyState::forceAnalysis(centerOfMass.coordinates, chainPosition, static_cast<Eigen::Quaterniond>(orientation), theoretical_g, forces);
+        //exoter_kinematics::BodyState::forceAnalysis(centerOfMass.coordinates, chainPosition, static_cast<Eigen::Quaterniond>(orientation), theoretical_g, forces);
 
         /** Compute the percentages **/
-        for (register int i=0; i<static_cast<int>(exoter::NUMBER_OF_WHEELS); ++i)
+        for (register int i=0; i<static_cast<int>(exoter_kinematics::NUMBER_OF_WHEELS); ++i)
         {
             if (forces[i] > 0.00)
                 centerOfMass.percentage[i] = forces[i] / theoretical_g;
@@ -357,7 +357,7 @@ WeightingMatrix Task::dynamicWeightMatrix (CenterOfMassConfiguration &centerOfMa
     }
 
     /** Form the weighting Matrix (static or dynamic it needs to be created) **/
-    for (register int i=0; i<static_cast<int>(exoter::NUMBER_OF_WHEELS); ++i)
+    for (register int i=0; i<static_cast<int>(exoter_kinematics::NUMBER_OF_WHEELS); ++i)
     {
         weightLocal.block<6,6>(6*i, 6*i) = centerOfMass.percentage[i] * Eigen::Matrix<double, 6, 6>::Identity();
     }
@@ -425,10 +425,10 @@ void Task::updateOdometry (const double &delta_t)
     /** Compute the Model Sensitivity Analysis **/
     if (_output_debug.value())
     {
-        Eigen::Matrix<double, 3+exoter::EXOTER_JOINT_DOF, 1> parameter;
-        Eigen::Matrix<double, 3+exoter::EXOTER_JOINT_DOF, 1> Tstate, TCov;
+        Eigen::Matrix<double, 3+exoter_kinematics::EXOTER_JOINT_DOF, 1> parameter;
+        Eigen::Matrix<double, 3+exoter_kinematics::EXOTER_JOINT_DOF, 1> Tstate, TCov;
         parameter.block<3, 1> (0,0) = cartesianVelocities.block<3,1>(3,0); //!Angular velocities
-        parameter.block<exoter::EXOTER_JOINT_DOF, 1> (3,0) = jointVelocities.block<exoter::EXOTER_JOINT_DOF, 1>(0,0);//!Joint velocities
+        parameter.block<exoter_kinematics::EXOTER_JOINT_DOF, 1> (3,0) = jointVelocities.block<exoter_kinematics::EXOTER_JOINT_DOF, 1>(0,0);//!Joint velocities
 
         Tstate = modelAnalysis.solve(cartesianVelocities.block<3,1> (0,0), cartesianVelCov.block<3,3>(0,0), parameter, TCov);
 

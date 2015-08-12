@@ -4,7 +4,7 @@ name 'exoter_odometry'
 
 # If new data types need to be defined, they have to be put in a separate C++
 # header, and this header will be loaded here
-using_library "exoter" # the Exoter dedicated Kinematics and types
+using_library "exoter_kinematics" # the Exoter dedicated Kinematics and types
 using_library "odometry" # the motion model solvers
 using_library "localization" # the IIR filter and Dead reckoning integration
 
