@@ -26,6 +26,11 @@
 /** Boost **/
 #include <boost/shared_ptr.hpp> /** Shared pointers **/
 
+/** Base Types **/
+#include <base/Time.hpp>
+#include <base/samples/Joints.hpp>
+#include <base/samples/RigidBodyState.hpp>
+
 namespace exoter_odometry {
 
 
