@@ -2,9 +2,9 @@
 #define ODOMETRY_TYPES_H
 
 #include <vector>
-#include <base/time.h>
-#include <base/eigen.h>
-#include <base/samples/rigid_body_state.h>
+#include <base/Time.hpp>
+#include <base/Eigen.hpp>
+#include <base/samples/RigidBodyState.hpp>
 
 namespace exoter_odometry
 {
